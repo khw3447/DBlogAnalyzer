@@ -1,0 +1,82 @@
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 -
+##################################################
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 - ## BATCH JOB     NAME : 매도분배
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 - ## BATCH SHELL   NAME : mkec495b.sh
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 - ## BATCH PROGRAM NAME : BTKEC495B.java
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 - ##
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 -
+##################################################
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 - [[ PARAMETER ]]
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 -  - 매도분배조회지시작일일
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 - [20260724]
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 -  - 자산관리기간번호
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 - []
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 - [[ PROGRESS STATUS ]]
+2026-07-24 10:56:07,057 INFO  mkec495b-1 log.kesa.batch.idx0 - []
+2026-07-24 10:56:08,061 DEBUG mkec495b-1 log.kesa.batch.idx0 -  SQL:
+SELECT /* TSKECD4C2_getTSKECD4C2ForSelResult_0001 */
+    C4C2.그룹회사코드 그룹회사코드
+  , C4C2.운용기관관리번호 운용기관관리번호
+  , C4C2.자산관리관리번호 자산관리관리번호
+  , C4C2.퇴직연금표준관리번호 퇴직연금표준관리번호
+  , C4C2.배도수량 배도수량
+FROM
+(
+    SELECT /*+ INDEX(INST1 TSKECD4C4) X$KEC4K04A03 */
+       그룹회사코드
+     , 운용지시일일
+    FROM INST1.TSKECD4C4
+    WHERE 그룹회사코드 = 'K80'
+    AND 운용지시일일 >= '20260010'
+    AND 배당지급구분 = '2'
+    AND ROWNUM > 0
+) M904
+, INST1.TSKECD4C2 C4C2
+WHERE
+    C4C2.그룹회사코드 = M904.그룹회사코드
+    AND C4C2.운용기관관리번호 = M904.운용기관관리번호
+ORDER BY C4C2.운용기관관리번호 ,C4C2.자산관리관리번호 ,C4C2.퇴직연금표준관리번호
+2026-07-24 10:56:08,258 DEBUG mkec495b-1 log.kesa.batch.idx0 - iBatis ConfigurationLoader. Mapping resource loaded '/config/kbase/resource/sqlmap_JDBC/'
+2026-07-24 10:56:08,329 DEBUG mkec495b-1 log.kesa.batch.idx0 -  SQL:
+UPDATE INST1.TSKECOPKO
+SET
+   시스템최종처리일시 = '20260724105608813000'
+ , 시스템처리순번번호 = 'kac495b'
+ , 운용지시일일 = '20260724'
+ , 배도수량 = 0
+ , 배도금액 = 36780418
+WHERE 그룹회사코드 = 'K80'
+AND 운용지시일일 = '20260724'
+AND 운용기관관리번호 = '24442594'
+AND 부동금관리구분 = '1'
+2026-07-24 10:56:08,331 DEBUG mkec495b-1 log.kesa.batch.idx0 -  매도분배 처리 : 완료
+2026-07-24 10:56:08,391 DEBUG mkec495b-1 log.kesa.batch.idx0 -  SQL:
+INSERT INTO INST1.TSKECPK32
+(
+    그룹회사코드
+    , 퇴직연금사용자체계번호
+    , 퇴직연금가입자체계번호
+    , 자산관리기관코드
+    , 입금금액
+    , 출금금액
+)
+VALUES (
+    'K80'                    -- 그룹회사코드
+    , '00158900091833'       -- 퇴직연금사용자체계번호
+    , '00158900091833'       -- 퇴직연금가입자체계번호
+    , 'B004'                 -- 자산관리기관코드
+    , 36780418               -- 입금금액
+    , 0                      -- 출금금액
+)
+2026-07-24 10:56:08,410 DEBUG mkec495b-1 log.kesa.batch.idx0 -  SQL:
+DELETE FROM INST1.TSKECD4C2
+WHERE 그룹회사코드 = 'K80'
+AND 운용지시일일 = '20260724'
+2026-07-24 10:56:08,431 DEBUG mkec495b-1 log.kesa.batch.idx0 -  SQL:
+MERGE INTO INST1.TSKECOPKO T
+USING (SELECT 'K80' AS 그룹회사코드, '20260724' AS 운용지시일일 FROM DUAL) S
+ON (T.그룹회사코드 = S.그룹회사코드 AND T.운용지시일일 = S.운용지시일일)
+WHEN MATCHED THEN
+    UPDATE SET T.배도금액 = 36780418
+WHEN NOT MATCHED THEN
+    INSERT (그룹회사코드, 운용지시일일, 배도금액) VALUES (S.그룹회사코드, S.운용지시일일, 36780418)

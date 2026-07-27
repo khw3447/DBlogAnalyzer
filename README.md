@@ -4,7 +4,16 @@ iBatis/WebLogic/Oracle 배치 로그에서 실행된 SQL을 추출해, 테이블
 개별 SQL의 전문/사용 컬럼-값/JOIN 테이블을 조회할 수 있는 데스크톱 분석 도구입니다. 폐쇄망 Windows 환경에 `.exe`로
 배포하는 것을 목표로 합니다.
 
-## 빌드 및 실행
+이 저장소에는 기능이 동일한 구현이 두 가지 있습니다.
+
+- **이 디렉터리 (Java/Swing + JSqlParser)**: exe 옆에 `jre` 폴더를 두거나, 대상 PC에 JDK가 이미 설치되어
+  있어도 되는 경우. 두 방식 모두 "설치"가 아니라 파일/폴더 복사만으로 끝나지만, exe 파일 하나만 달랑
+  있어야 하는 요건에는 맞지 않습니다.
+- **[`python/`](python/) (Python/Tkinter + sqlglot)**: 대상 PC에 JDK도 설치 못 하고, 부속 폴더/파일 없이
+  정말 exe 파일 하나만으로 실행해야 하는 경우. PyInstaller `--onefile`로 Python 런타임까지 exe 하나에
+  전부 담습니다. 자세한 내용은 `python/README.md` 참고.
+
+## 빌드 및 실행 (Java 버전)
 
 요구 사항: JDK 21, Maven.
 
