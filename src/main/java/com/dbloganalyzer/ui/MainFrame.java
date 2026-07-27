@@ -19,7 +19,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -48,6 +51,7 @@ public class MainFrame extends JFrame {
     private final JTable sqlListView = new JTable(sqlListModel);
     private final JLabel statusLabel = new JLabel("로그를 불러오거나 붙여넣은 뒤 [분석 실행]을 누르세요.");
     private final Map<SqlType, JCheckBox> typeFilters = new EnumMap<>(SqlType.class);
+    private final JTextField searchField = new JTextField(20);
 
     private AnalysisResult currentResult;
     private String selectedTable;
@@ -110,9 +114,14 @@ public class MainFrame extends JFrame {
         });
         JScrollPane sqlListScroll = new JScrollPane(sqlListView);
 
+        JPanel filterAndSearch = new JPanel();
+        filterAndSearch.setLayout(new javax.swing.BoxLayout(filterAndSearch, javax.swing.BoxLayout.Y_AXIS));
+        filterAndSearch.add(buildFilterPanel());
+        filterAndSearch.add(buildSearchPanel());
+
         JPanel sqlListPanel = new JPanel(new BorderLayout());
         sqlListPanel.setBorder(BorderFactory.createTitledBorder("SQL 목록 (더블클릭 시 상세보기)"));
-        sqlListPanel.add(buildFilterPanel(), BorderLayout.NORTH);
+        sqlListPanel.add(filterAndSearch, BorderLayout.NORTH);
         sqlListPanel.add(sqlListScroll, BorderLayout.CENTER);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tableStatsScroll, sqlListPanel);
@@ -139,6 +148,32 @@ public class MainFrame extends JFrame {
             refreshSqlList();
         });
         panel.add(clearTableFilter);
+        return panel;
+    }
+
+    private JPanel buildSearchPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel.add(new JLabel("컬럼/값 검색:"));
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                refreshSqlList();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                refreshSqlList();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                refreshSqlList();
+            }
+        });
+        panel.add(searchField);
+        JButton clearSearch = new JButton("지우기");
+        clearSearch.addActionListener(e -> searchField.setText(""));
+        panel.add(clearSearch);
         return panel;
     }
 
@@ -207,9 +242,13 @@ public class MainFrame extends JFrame {
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(SqlType.class)));
 
+        String searchTerm = searchField.getText().strip().toLowerCase();
+
         List<SqlRecord> filtered = currentResult.records().stream()
                 .filter(r -> enabledTypes.contains(r.type()))
                 .filter(r -> selectedTable == null || r.tables().contains(selectedTable))
+                .filter(r -> searchTerm.isEmpty() || r.columnValues().stream().anyMatch(cv ->
+                        cv.column().toLowerCase().contains(searchTerm) || cv.value().toLowerCase().contains(searchTerm)))
                 .collect(Collectors.toList());
 
         sqlListModel.setRows(filtered);

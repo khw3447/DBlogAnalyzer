@@ -50,6 +50,7 @@ class MainWindow(tk.Tk):
         self.result: AnalysisResult | None = None
         self.selected_table: str | None = None
         self.type_filters: dict[SqlType, tk.BooleanVar] = {}
+        self.search_var = tk.StringVar()
 
         self._build_input_panel()
         self._build_result_panel()
@@ -115,6 +116,14 @@ class MainWindow(tk.Tk):
             ttk.Checkbutton(filter_bar, text=sql_type.name, variable=var,
                              command=self._refresh_sql_list).pack(side="left", padx=2)
         ttk.Button(filter_bar, text="테이블 필터 해제", command=self._clear_table_filter).pack(side="left", padx=(10, 0))
+
+        search_bar = ttk.Frame(right)
+        search_bar.pack(fill="x", padx=4, pady=(0, 4))
+        ttk.Label(search_bar, text="컬럼/값 검색:").pack(side="left")
+        search_entry = ttk.Entry(search_bar, textvariable=self.search_var)
+        search_entry.pack(side="left", fill="x", expand=True, padx=(4, 4))
+        self.search_var.trace_add("write", lambda *_: self._refresh_sql_list())
+        ttk.Button(search_bar, text="지우기", command=lambda: self.search_var.set("")).pack(side="left")
 
         list_columns = ("seq", "timestamp", "type", "tables", "summary", "parsed")
         list_headers = ("#", "시각", "타입", "테이블", "SQL 요약", "파싱")
@@ -186,10 +195,16 @@ class MainWindow(tk.Tk):
             return
 
         enabled_types = {t for t, var in self.type_filters.items() if var.get()}
+        search_term = self.search_var.get().strip().lower()
         for record in self.result.records:
             if record.type not in enabled_types:
                 continue
             if self.selected_table is not None and self.selected_table not in record.tables:
+                continue
+            if search_term and not any(
+                search_term in cv.column.lower() or search_term in cv.value.lower()
+                for cv in record.column_values
+            ):
                 continue
             row_id = str(record.sequence)
             summary = " ".join(record.raw_sql.split())
