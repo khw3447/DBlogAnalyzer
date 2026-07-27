@@ -71,4 +71,62 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!--
+      Builds a native Windows launcher (target/DBLogAnalyzer.exe) around the
+      shaded jar, using Launch4j's cross-platform resource compiler (it ships
+      native binaries for Linux/Mac/Windows, so this works from any build
+      host, unlike jpackage). The exe is a thin launcher, not a bundled
+      runtime: it looks for a "jre" folder next to itself first, falling
+      back to a registry-detected system JDK/JRE >= 21. See README.md for
+      how to attach a Windows JRE for a fully offline closed-network deploy.
+      Run with: mvn -Pwindows-exe package
+    -->
+    <profile>
+      <id>windows-exe</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.akathist.maven.plugins.launch4j</groupId>
+            <artifactId>launch4j-maven-plugin</artifactId>
+            <version>2.5.1</version>
+            <executions>
+              <execution>
+                <id>l4j-gui</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>launch4j</goal>
+                </goals>
+                <configuration>
+                  <headerType>gui</headerType>
+                  <jar>${project.build.directory}/${project.build.finalName}.jar</jar>
+                  <outfile>${project.build.directory}/DBLogAnalyzer.exe</outfile>
+                  <errTitle>DBLogAnalyzer</errTitle>
+                  <classPath>
+                    <mainClass>${mainClass}</mainClass>
+                  </classPath>
+                  <jre>
+                    <path>jre</path>
+                    <minVersion>21.0.0</minVersion>
+                  </jre>
+                  <versionInfo>
+                    <fileVersion>1.0.0.0</fileVersion>
+                    <txtFileVersion>1.0.0</txtFileVersion>
+                    <fileDescription>DBLogAnalyzer</fileDescription>
+                    <copyright>DBLogAnalyzer</copyright>
+                    <productVersion>1.0.0.0</productVersion>
+                    <txtProductVersion>1.0.0</txtProductVersion>
+                    <productName>DBLogAnalyzer</productName>
+                    <internalName>DBLogAnalyzer</internalName>
+                    <originalFilename>DBLogAnalyzer.exe</originalFilename>
+                  </versionInfo>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

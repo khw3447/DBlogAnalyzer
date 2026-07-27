@@ -16,7 +16,39 @@ java -jar target/dblog-analyzer.jar   # 실행
 
 ## Windows용 exe 패키징
 
+두 가지 방법이 있습니다. 어느 쪽이든 최종적으로는 `.exe` 하나(+선택적으로 `jre` 폴더)를 폐쇄망 PC에 복사해
+넣는 형태입니다.
+
+### 방법 A: `mvn -Pwindows-exe package` (Linux/Mac 빌드 머신에서도 가능, 권장)
+
+```
+mvn -Pwindows-exe package
+```
+
+`target/DBLogAnalyzer.exe` 하나가 만들어집니다. [Launch4j](https://launch4j.sourceforge.net/)가 애플리케이션
+jar 전체를 exe 안에 그대로 임베드하므로, **이 exe 파일 하나만으로 배포 가능**합니다 (jpackage와 달리 크로스
+플랫폼 빌드가 가능해 Windows 머신 없이도 만들 수 있습니다). 다만 이 exe는 "런처"이지 JRE 자체를 담고 있지는
+않으므로, 실행하려는 PC에 둘 중 하나가 필요합니다.
+
+- **폐쇄망 완전 오프라인 배포**: JDK 21 Windows용 zip(예: Eclipse Temurin `OpenJDK21U-jre_x64_windows_hotspot_*.zip`)을
+  인터넷 되는 PC에서 받아 압축을 풀고, 그 폴더를 `jre`라는 이름으로 `DBLogAnalyzer.exe`와 같은 폴더에 둡니다.
+  ```
+  DBLogAnalyzer.exe
+  jre/
+    bin/
+    lib/
+    ...
+  ```
+  이 폴더 전체를 폐쇄망으로 옮기면 대상 PC에 Java를 따로 설치할 필요가 없습니다. (이 리포지토리 빌드
+  환경은 조직 네트워크 정책상 JDK 배포처 다운로드가 막혀 있어, `jre` 폴더 자체는 여기서 대신 만들어 드릴 수
+  없습니다 - 사용자 환경에서 직접 받아 넣어야 합니다.)
+- **PC에 JDK 21이 이미 설치돼 있는 경우**: `jre` 폴더 없이 exe만 복사해도, Launch4j가 레지스트리에서
+  JDK 21 이상을 자동으로 찾아 실행합니다.
+
+### 방법 B: `jpackage` (Windows 머신 필요, 완전 자동 번들링)
+
 `jpackage`는 크로스 컴파일을 지원하지 않으므로, **Windows 머신에서 JDK 21을 설치한 뒤** 실행해야 합니다.
+대신 `jre` 폴더를 직접 구해 넣을 필요 없이 완전 자동으로 런타임까지 묶어 줍니다.
 
 ```
 mvn package
@@ -36,7 +68,17 @@ jpackage ^
 
 `-Dsun.java2d.d3d=false`는 Java2D가 Direct3D 대신 GDI 렌더링 경로를 쓰도록 강제합니다. 오래된/폐쇄망
 산업용 PC에서 그래픽 드라이버가 최신이 아닐 때 Direct3D 파이프라인 초기화 문제로 화면이 깨지는 것을 예방하는
-일반적인 방어책이라 기본으로 넣어 두었습니다.
+일반적인 방어책이라 기본으로 넣어 두었습니다. 방법 A로 만든 exe에도 같은 옵션을 주려면 pom.xml의
+`windows-exe` 프로필에 있는 `launch4j-maven-plugin` 설정에 `<jvmOptions><opt>-Dsun.java2d.d3d=false</opt></jvmOptions>`를
+추가하세요.
+
+### 이 저장소에서 검증한 것 / 못한 것
+
+방법 A로 만든 exe는 이 개발 환경(Linux)에서 다음까지 확인했습니다: 올바른 PE(MZ/PE\0\0) 헤더를 가진 정상
+Windows 실행파일이라는 것, 그 안에 애플리케이션 jar(클래스 전체 + JSqlParser)가 정확히 임베드되어 있다는
+것. 다만 이 환경은 리눅스 컨테이너이고 조직 네트워크 정책상 Windows용 JRE 다운로드가 막혀 있어, **실제
+Windows(또는 Wine)에서 더블클릭해 창이 뜨는 것까지는 이 세션에서 직접 실행 검증하지 못했습니다.** 받으신
+exe를 대상 환경에서 한 번 실행해 보시고, 문제가 있으면 알려주세요.
 
 ### Windows 10 Enterprise 2016 LTSB(1607) 대상일 때 주의할 점
 
