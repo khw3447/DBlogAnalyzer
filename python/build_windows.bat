@@ -16,33 +16,39 @@ if errorlevel 1 (
   goto :show_log_and_exit
 )
 
-echo [2/3] 필요한 패키지 설치 중...
+echo [2/3] 필요한 패키지 설치 중... (아래에 실시간으로 진행 상황이 표시됩니다. 몇 분 걸릴 수
+echo       있으니 화면이 잠시 멈춘 것처럼 보여도 창을 닫지 말고 기다려 주세요)
 echo [2/3] Installing packages >> "%LOG%"
 if exist wheels (
-  echo   wheels 폴더 발견: %CD%\wheels
+  echo   wheels 폴더 발견: %CD%\wheels ^(완전 오프라인 설치, 인터넷 접속 안 함^)
   echo   found wheels folder: %CD%\wheels >> "%LOG%"
-  echo   동봉된 wheels 폴더에서 오프라인 설치를 시도합니다 (인터넷 접속 안 함)...
-  python -m pip install --no-index --find-links wheels -r requirements.txt pyinstaller >> "%LOG%" 2>&1
+  python -m pip install --no-index --find-links wheels -r requirements.txt pyinstaller
 ) else (
   echo   wheels 폴더를 찾지 못했습니다: %CD%\wheels
   echo   wheels folder not found at: %CD%\wheels >> "%LOG%"
-  echo   wheels 폴더가 없어 인터넷(pip, pypi.org)으로 설치를 시도합니다...
-  python -m pip install -r requirements.txt pyinstaller >> "%LOG%" 2>&1
+  echo   인터넷^(pip, pypi.org^)으로 설치를 시도합니다...
+  python -m pip install -r requirements.txt pyinstaller
 )
 if errorlevel 1 (
+  echo [2/3] pip install failed >> "%LOG%"
   echo.
-  echo 패키지 설치에 실패했습니다. 아래 로그와 build_log.txt를 확인해 저에게 보내주세요.
+  echo 패키지 설치에 실패했습니다. 위에 표시된 내용을 저에게 보내주세요 ^(build_log.txt에는
+  echo 단계 기록만 남습니다. 자세한 오류 문구는 화면에 이미 표시된 것이 전부입니다^).
   goto :show_log_and_exit
 )
+echo [2/3] pip install ok >> "%LOG%"
 
-echo [3/3] exe 빌드 중...
+echo.
+echo [3/3] exe 빌드 중... (마찬가지로 아래에 실시간으로 표시됩니다. 시간이 좀 걸립니다)
 echo [3/3] Building exe >> "%LOG%"
-python -m PyInstaller --onefile --windowed --name DBLogAnalyzer app.py >> "%LOG%" 2>&1
+python -m PyInstaller --onefile --windowed --name DBLogAnalyzer app.py
 if errorlevel 1 (
+  echo [3/3] pyinstaller failed >> "%LOG%"
   echo.
-  echo 빌드에 실패했습니다. 아래 로그와 build_log.txt를 확인해 저에게 보내주세요.
+  echo 빌드에 실패했습니다. 위에 표시된 내용을 저에게 보내주세요.
   goto :show_log_and_exit
 )
+echo [3/3] pyinstaller ok >> "%LOG%"
 
 echo.
 echo 완료: dist\DBLogAnalyzer.exe
@@ -51,11 +57,11 @@ echo SUCCESS >> "%LOG%"
 
 :show_log_and_exit
 echo.
-echo ==================== build_log.txt 내용 ====================
+echo ==================== build_log.txt 요약 (단계 진행 기록용, 상세 오류는 위 화면 참고) ====================
 type "%LOG%"
-echo ===============================================================
+echo ===============================================================================================
 echo.
-echo 문제가 있었다면, 이 폴더에 새로 생긴 build_log.txt 파일을 그대로 보내주세요.
+echo 문제가 있었다면 위 화면 내용을 캡처하거나 build_log.txt를 같이 보내주세요.
 echo (이 창이 바로 닫힌다면: 이 bat 파일을 더블클릭하지 말고, 명령 프롬프트를 먼저 열어서
 echo  이 폴더로 이동한 뒤 build_windows.bat 라고 입력해서 실행해 보세요.)
 pause
