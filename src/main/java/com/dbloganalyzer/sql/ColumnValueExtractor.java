@@ -97,7 +97,7 @@ final class ColumnValueExtractor {
                 Column column = columns.get(i);
                 Expression value = i < values.size() ? (Expression) values.get(i) : null;
                 String valueText = value == null ? "" : LiteralFormatter.text(value);
-                out.add(new ColumnValue(clause, "", column.getColumnName(), "=", valueText));
+                out.add(new ColumnValue(clause, "", LiteralFormatter.unquoteIdentifier(column.getColumnName()), "=", valueText));
             }
         }
     }
@@ -113,7 +113,7 @@ final class ColumnValueExtractor {
             Column column = columns.get(i);
             Expression value = i < valueExprs.size() ? (Expression) valueExprs.get(i) : null;
             String valueText = value == null ? "" : LiteralFormatter.text(value);
-            out.add(new ColumnValue("VALUES", "", column.getColumnName(), "=", valueText));
+            out.add(new ColumnValue("VALUES", "", LiteralFormatter.unquoteIdentifier(column.getColumnName()), "=", valueText));
         }
     }
 
@@ -131,7 +131,7 @@ final class ColumnValueExtractor {
                         Column column = columns.get(i);
                         Expression value = i < values.size() ? (Expression) values.get(i) : null;
                         String valueText = value == null ? "" : LiteralFormatter.text(value);
-                        out.add(new ColumnValue("VALUES", "", column.getColumnName(), "=", valueText));
+                        out.add(new ColumnValue("VALUES", "", LiteralFormatter.unquoteIdentifier(column.getColumnName()), "=", valueText));
                     }
                 }
                 addWhere(mergeInsert.getWhereCondition(), "WHERE", out);

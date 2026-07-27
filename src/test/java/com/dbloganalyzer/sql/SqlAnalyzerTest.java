@@ -17,7 +17,15 @@ class SqlAnalyzerTest {
     private final SqlAnalyzer analyzer = new SqlAnalyzer();
 
     private List<RawSqlBlock> loadSampleBlocks() throws IOException {
-        try (InputStream in = getClass().getResourceAsStream("/sample-log.txt")) {
+        return loadBlocks("/sample-log.txt");
+    }
+
+    private List<RawSqlBlock> loadBracketSampleBlocks() throws IOException {
+        return loadBlocks("/sample-log-bracket.txt");
+    }
+
+    private List<RawSqlBlock> loadBlocks(String resource) throws IOException {
+        try (InputStream in = getClass().getResourceAsStream(resource)) {
             String text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             return new LogParser().extractSqlBlocks(text);
         }
@@ -79,5 +87,38 @@ class SqlAnalyzerTest {
         assertTrue(record.parsedOk(), record.parseError());
         assertEquals(SqlType.MERGE, record.type());
         assertTrue(record.tables().contains("INST1.TSKECOPKO"));
+    }
+
+    @Test
+    void bracketedFormatSelectParsesCorrectly() throws IOException {
+        SqlRecord record = analyzer.analyze(loadBracketSampleBlocks().get(0));
+
+        assertTrue(record.parsedOk(), record.parseError());
+        assertEquals(SqlType.SELECT, record.type());
+        assertEquals(List.of("INST1.TSKECC101"), record.tables());
+        assertEquals("KEC0649142", record.thread());
+        assertTrue(record.columnValues().stream().anyMatch(cv -> cv.column().equals("그룹회사코드") && cv.value().equals("KB0")));
+    }
+
+    @Test
+    void bracketedFormatUpdateParsesCorrectly() throws IOException {
+        SqlRecord record = analyzer.analyze(loadBracketSampleBlocks().get(1));
+
+        assertTrue(record.parsedOk(), record.parseError());
+        assertEquals(SqlType.UPDATE, record.type());
+        assertEquals(List.of("INST1.TSKECC201"), record.tables());
+        assertTrue(record.columnValues().stream()
+                .anyMatch(cv -> cv.clause().equals("SET") && cv.column().equals("퇴직연금거래결과구분") && cv.value().equals("B")));
+    }
+
+    @Test
+    void bracketedFormatLowercaseInsertWithMultilineXmlLiteralParsesCorrectly() throws IOException {
+        SqlRecord record = analyzer.analyze(loadBracketSampleBlocks().get(2));
+
+        assertTrue(record.parsedOk(), record.parseError());
+        assertEquals(SqlType.INSERT, record.type());
+        assertEquals(List.of("inst1.TSKSAST04"), record.tables());
+        assertTrue(record.columnValues().stream()
+                .anyMatch(cv -> cv.column().equals("시스템경로번호") && cv.value().equals("002")));
     }
 }

@@ -17,6 +17,14 @@ final class LiteralFormatter {
         return e instanceof StringValue || e instanceof LongValue || e instanceof DoubleValue || e instanceof NullValue;
     }
 
+    /** Strips the surrounding quotes JSqlParser keeps on delimited identifiers like {@code "컬럼명"}. */
+    static String unquoteIdentifier(String name) {
+        if (name != null && name.length() >= 2 && name.charAt(0) == '"' && name.charAt(name.length() - 1) == '"') {
+            return name.substring(1, name.length() - 1);
+        }
+        return name;
+    }
+
     static String text(Expression e) {
         if (e instanceof StringValue s) {
             return s.getValue();

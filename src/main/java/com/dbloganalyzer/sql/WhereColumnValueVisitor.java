@@ -97,6 +97,6 @@ class WhereColumnValueVisitor extends ExpressionVisitorAdapter {
         String table = column.getTable() != null && column.getTable().getName() != null
                 ? column.getTable().getName()
                 : "";
-        return new ColumnValue(clause, table, column.getColumnName(), operator, value);
+        return new ColumnValue(clause, table, LiteralFormatter.unquoteIdentifier(column.getColumnName()), operator, value);
     }
 }

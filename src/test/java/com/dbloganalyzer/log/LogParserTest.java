@@ -13,7 +13,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class LogParserTest {
 
     private String loadSampleLog() throws IOException {
-        try (InputStream in = getClass().getResourceAsStream("/sample-log.txt")) {
+        return loadResource("/sample-log.txt");
+    }
+
+    private String loadBracketSampleLog() throws IOException {
+        return loadResource("/sample-log-bracket.txt");
+    }
+
+    private String loadResource(String name) throws IOException {
+        try (InputStream in = getClass().getResourceAsStream(name)) {
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
@@ -46,5 +54,31 @@ class LogParserTest {
 
         assertEquals("2026-07-24 10:56:08,061", blocks.get(0).timestamp());
         assertEquals("mkec495b-1", blocks.get(0).thread());
+    }
+
+    @Test
+    void extractsSqlBlocksFromBracketedLogFormat() throws IOException {
+        List<RawSqlBlock> blocks = new LogParser().extractSqlBlocks(loadBracketSampleLog());
+
+        assertEquals(3, blocks.size());
+        assertTrue(blocks.get(0).rawSql().startsWith("SELECT"));
+        assertTrue(blocks.get(1).rawSql().startsWith("UPDATE"));
+        assertTrue(blocks.get(2).rawSql().startsWith("insert"));
+    }
+
+    @Test
+    void bracketedFormatCapturesTimestampAndProgramCodeAsThread() throws IOException {
+        List<RawSqlBlock> blocks = new LogParser().extractSqlBlocks(loadBracketSampleLog());
+
+        assertEquals("2026-07-23 18:03:57", blocks.get(0).timestamp());
+        assertEquals("KEC0649142", blocks.get(0).thread());
+    }
+
+    @Test
+    void bracketedFormatDoesNotSwallowNonSqlLinesBetweenBlocks() throws IOException {
+        List<RawSqlBlock> blocks = new LogParser().extractSqlBlocks(loadBracketSampleLog());
+
+        assertTrue(!blocks.get(1).rawSql().contains("TransactionCoordinator"));
+        assertTrue(!blocks.get(2).rawSql().contains("TheK_ERROR_FORMAT"));
     }
 }

@@ -4,10 +4,15 @@ from dbloganalyzer.logparser import extract_sql_blocks
 from dbloganalyzer.sql_analyzer import CommentType, SqlType, analyze
 
 FIXTURE = (Path(__file__).parent / "fixtures" / "sample-log.txt").read_text(encoding="utf-8")
+BRACKET_FIXTURE = (Path(__file__).parent / "fixtures" / "sample-log-bracket.txt").read_text(encoding="utf-8")
 
 
 def load_blocks():
     return extract_sql_blocks(FIXTURE)
+
+
+def load_bracket_blocks():
+    return extract_sql_blocks(BRACKET_FIXTURE)
 
 
 def test_select_statement_finds_outer_and_subquery_tables_and_statement_id_tag():
@@ -59,3 +64,32 @@ def test_merge_statement_detected_with_all_tables():
     assert record.parsed_ok, record.parse_error
     assert record.type == SqlType.MERGE
     assert "INST1.TSKECOPKO" in record.tables
+
+
+def test_bracketed_format_select_parses_correctly():
+    record = analyze(load_bracket_blocks()[0])
+
+    assert record.parsed_ok, record.parse_error
+    assert record.type == SqlType.SELECT
+    assert record.tables == ["INST1.TSKECC101"]
+    assert record.thread == "KEC0649142"
+    assert any(cv.column == "그룹회사코드" and cv.value == "KB0" for cv in record.column_values)
+
+
+def test_bracketed_format_update_parses_correctly():
+    record = analyze(load_bracket_blocks()[1])
+
+    assert record.parsed_ok, record.parse_error
+    assert record.type == SqlType.UPDATE
+    assert record.tables == ["INST1.TSKECC201"]
+    assert any(cv.clause == "SET" and cv.column == "퇴직연금거래결과구분" and cv.value == "B"
+               for cv in record.column_values)
+
+
+def test_bracketed_format_lowercase_insert_with_multiline_xml_literal_parses_correctly():
+    record = analyze(load_bracket_blocks()[2])
+
+    assert record.parsed_ok, record.parse_error
+    assert record.type == SqlType.INSERT
+    assert record.tables == ["inst1.TSKSAST04"]
+    assert any(cv.column == "시스템경로번호" and cv.value == "002" for cv in record.column_values)
