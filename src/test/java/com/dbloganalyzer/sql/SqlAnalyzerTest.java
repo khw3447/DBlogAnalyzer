@@ -121,4 +121,19 @@ class SqlAnalyzerTest {
         assertTrue(record.columnValues().stream()
                 .anyMatch(cv -> cv.column().equals("시스템경로번호") && cv.value().equals("002")));
     }
+
+    @Test
+    void whereClauseFunctionCallValueIsCaptured() {
+        RawSqlBlock block = new RawSqlBlock(1, "2026-01-01 00:00:00,000", "t",
+                "SELECT 1 FROM DUAL WHERE 가입년월일 <= TO_CHAR(SYSDATE, 'YYYYMMDD') "
+                        + "AND 해제년월일 = NVL(종료일자, '99991231')");
+
+        SqlRecord record = analyzer.analyze(block);
+
+        assertTrue(record.parsedOk(), record.parseError());
+        assertTrue(record.columnValues().stream().anyMatch(cv ->
+                cv.column().equals("가입년월일") && cv.value().contains("TO_CHAR") && cv.value().contains("SYSDATE")));
+        assertTrue(record.columnValues().stream().anyMatch(cv ->
+                cv.column().equals("해제년월일") && cv.value().contains("NVL")));
+    }
 }

@@ -84,9 +84,13 @@ class WhereColumnValueVisitor extends ExpressionVisitorAdapter {
     private void handleBinary(BinaryExpression expr) {
         Expression left = expr.getLeftExpression();
         Expression right = expr.getRightExpression();
-        if (left instanceof Column column && LiteralFormatter.isLiteral(right)) {
+        // Accept any right-hand side that isn't itself a column reference - a plain
+        // literal, but also function calls like TO_CHAR(SYSDATE, 'YYYYMMDD') or
+        // NVL(...), which used to be silently dropped (and so were unsearchable)
+        // because only literal expressions were treated as a capturable "value".
+        if (left instanceof Column column && !(right instanceof Column)) {
             results.add(toColumnValue(column, expr.getStringExpression(), LiteralFormatter.text(right)));
-        } else if (right instanceof Column column && LiteralFormatter.isLiteral(left)) {
+        } else if (right instanceof Column column && !(left instanceof Column)) {
             results.add(toColumnValue(column, expr.getStringExpression(), LiteralFormatter.text(left)));
         }
         left.accept(this);

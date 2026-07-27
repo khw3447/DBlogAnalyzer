@@ -149,9 +149,13 @@ def _collect_condition(condition: exp.Expression, clause: str) -> list[ColumnVal
 
         operator = _OPERATOR_SYMBOLS[type(node)]
         left, right = node.this, node.expression
-        if isinstance(left, exp.Column) and _is_literal(right):
+        # Accept any right-hand side that isn't itself a column reference - a plain
+        # literal, but also function calls like TO_CHAR(SYSDATE, 'YYYYMMDD') or
+        # NVL(...), which used to be silently dropped (and so were unsearchable)
+        # because only Literal/Null nodes were treated as a capturable "value".
+        if isinstance(left, exp.Column) and not isinstance(right, exp.Column):
             out.append(ColumnValue(clause, _col_table(left), left.name, operator, _literal_text(right)))
-        elif isinstance(right, exp.Column) and _is_literal(left):
+        elif isinstance(right, exp.Column) and not isinstance(left, exp.Column):
             out.append(ColumnValue(clause, _col_table(right), right.name, operator, _literal_text(left)))
     return out
 
@@ -205,13 +209,13 @@ def _col_table(column: exp.Column) -> str:
     return column.table or ""
 
 
-def _is_literal(e: exp.Expression) -> bool:
-    return isinstance(e, (exp.Literal, exp.Null))
-
-
 def _literal_text(e: exp.Expression) -> str:
     if isinstance(e, exp.Null):
         return "NULL"
     if isinstance(e, exp.Literal):
         return str(e.this)
-    return e.sql()
+    # sqlglot normalizes many dialect-specific functions into its own canonical
+    # expressions (e.g. Oracle's TO_CHAR(d, fmt) becomes TimeToStr internally),
+    # so rendering without a dialect would print that generic form (TIME_TO_STR)
+    # instead of the Oracle syntax the log actually contains.
+    return e.sql(dialect="oracle")

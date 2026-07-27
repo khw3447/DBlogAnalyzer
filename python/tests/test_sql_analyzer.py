@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from dbloganalyzer.logparser import extract_sql_blocks
+from dbloganalyzer.logparser import RawSqlBlock, extract_sql_blocks
 from dbloganalyzer.sql_analyzer import CommentType, SqlType, analyze
 
 FIXTURE = (Path(__file__).parent / "fixtures" / "sample-log.txt").read_text(encoding="utf-8")
@@ -93,3 +93,15 @@ def test_bracketed_format_lowercase_insert_with_multiline_xml_literal_parses_cor
     assert record.type == SqlType.INSERT
     assert record.tables == ["inst1.TSKSAST04"]
     assert any(cv.column == "시스템경로번호" and cv.value == "002" for cv in record.column_values)
+
+
+def test_where_clause_function_call_value_is_captured():
+    block = RawSqlBlock(1, "2026-01-01 00:00:00,000", "t",
+                         "SELECT 1 FROM DUAL WHERE 가입년월일 <= TO_CHAR(SYSDATE, 'YYYYMMDD') "
+                         "AND 해제년월일 = NVL(종료일자, '99991231')")
+    record = analyze(block)
+
+    assert record.parsed_ok, record.parse_error
+    assert any(cv.column == "가입년월일" and "TO_CHAR" in cv.value and "SYSDATE" in cv.value
+               for cv in record.column_values)
+    assert any(cv.column == "해제년월일" and "NVL" in cv.value for cv in record.column_values)
