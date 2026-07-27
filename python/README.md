@@ -28,11 +28,18 @@ pip install pytest && pytest tests/    # 테스트 (13건, Java 버전과 동일
 
 ```
 pip install -r requirements.txt pyinstaller
-pyinstaller --onefile --windowed --name DBLogAnalyzer app.py
+pyinstaller --onefile --windowed --collect-all sqlglot --name DBLogAnalyzer app.py
 ```
 
 `dist\DBLogAnalyzer.exe` 하나가 만들어집니다. 이 파일 하나만 복사하면 폐쇄망 PC에서 바로 실행됩니다
 (Python도, JDK도, 별도 폴더도 필요 없습니다). `--windowed`는 실행 시 콘솔 창이 함께 뜨지 않게 합니다.
+
+`--collect-all sqlglot`은 꼭 필요합니다. sqlglot은 `read="oracle"`처럼 문자열로 방언을 지정하면
+`importlib.import_module(f"sqlglot.dialects.{key}")`로 해당 모듈을 실행 시점에 동적으로 불러오는데,
+PyInstaller는 소스 코드를 정적 분석해서 어떤 모듈을 exe에 담을지 정하기 때문에 이런 동적 임포트는
+찾아내지 못합니다. 이 옵션 없이 빌드하면 겉보기엔 정상적으로 빌드/실행되지만 실제 SQL을 분석하려는
+순간 `No module named 'sqlglot.dialects.oracle'`로 전부 파싱 실패 처리됩니다(테이블 정보가 하나도
+안 잡히는 것으로 나타남) - 실제로 이 증상으로 한 번 걸렸고, 최소 재현으로 원인을 확인한 뒤 고쳤습니다.
 
 빌드 머신에 필요한 것은 Python 3.11+ 설치와 위 두 pip 명령뿐입니다. 빌드가 끝나면 그 Python 자체는 배포
 대상 PC에 필요 없습니다 - exe 안에 이미 다 들어있습니다.

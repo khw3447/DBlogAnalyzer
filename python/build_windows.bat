@@ -56,7 +56,7 @@ echo [2/3] pip install ok >> "%LOG%"
 echo.
 echo [3/3] exe 빌드 중... (마찬가지로 아래에 실시간으로 표시됩니다. 시간이 좀 걸립니다)
 echo [3/3] Building exe >> "%LOG%"
-python -m PyInstaller --onefile --windowed --name DBLogAnalyzer app.py
+python -m PyInstaller --onefile --windowed --collect-all sqlglot --name DBLogAnalyzer app.py
 if errorlevel 1 (
   echo [3/3] pyinstaller failed >> "%LOG%"
   echo.

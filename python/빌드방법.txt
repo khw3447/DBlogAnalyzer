@@ -33,7 +33,7 @@ DBLogAnalyzer.exe 만드는 방법 (Windows PC에서 1회만)
 
    (수동으로 직접 하고 싶다면, 명령 프롬프트에서 아래 두 줄을 순서대로 입력해도 됩니다)
    > python -m pip install --no-index --find-links wheels -r requirements.txt pyinstaller
-   > python -m PyInstaller --onefile --windowed --name DBLogAnalyzer app.py
+   > python -m PyInstaller --onefile --windowed --collect-all sqlglot --name DBLogAnalyzer app.py
 
 3) 빌드가 끝나면 dist 폴더 안에 DBLogAnalyzer.exe 가 생깁니다.
    이 파일 "하나만" 복사해서 폐쇄망 PC로 옮기면 됩니다. Python도, 다른 폴더/파일도 필요 없습니다.
@@ -80,3 +80,10 @@ Q. 프로그램 화면이나 불러온 로그 파일의 한글이 깨져 보입�
 A. 최신 코드에서 한글 파일 인코딩(UTF-8/EUC-KR/CP949) 자동 감지 로직을 더 정확하게 고쳤습니다.
    여전히 깨진다면: (1) 프로그램 자체의 버튼/라벨 글자가 깨지는지, (2) 붙여넣거나 불러온 로그 "내용"
    글자가 깨지는지 구분해서 알려주세요. 원인이 서로 다릅니다.
+
+Q. exe는 실행되고 SQL 타입(SELECT/INSERT 등)은 구분되는데, 테이블 정보가 하나도 안 나오고
+   상세보기에 "파싱실패: No module named 'sqlglot.dialects.oracle'"이 뜹니다.
+A. 이제 고쳤습니다 - build_windows.bat이 PyInstaller에 `--collect-all sqlglot` 옵션을 주도록
+   반영되어 있습니다(이 zip은 이미 반영된 버전입니다). sqlglot이 Oracle 방언 모듈을 실행 중에
+   동적으로 불러오는데, PyInstaller가 소스코드 정적 분석만으로는 그걸 못 찾아서 exe에 빠뜨리는
+   문제였습니다. 옛날 zip으로 만든 exe를 그대로 쓰고 계시다면, 이 zip으로 다시 빌드해 주세요.
