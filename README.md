@@ -26,12 +26,34 @@ jpackage ^
   --main-class com.dbloganalyzer.App ^
   --name DBLogAnalyzer ^
   --type app-image ^
-  --win-console
+  --win-console ^
+  --java-options "-Dsun.java2d.d3d=false"
 ```
 
 `--type app-image`는 JRE가 통째로 포함된 실행 폴더를 만들어 주므로, 이 폴더를 그대로 폐쇄망 PC에 복사하면
 별도 Java 설치 없이 `DBLogAnalyzer.exe`를 실행할 수 있습니다. 배포용 설치 파일(msi)이 필요하면
 `--type msi` (WiX Toolset 필요)를 사용하세요.
+
+`-Dsun.java2d.d3d=false`는 Java2D가 Direct3D 대신 GDI 렌더링 경로를 쓰도록 강제합니다. 오래된/폐쇄망
+산업용 PC에서 그래픽 드라이버가 최신이 아닐 때 Direct3D 파이프라인 초기화 문제로 화면이 깨지는 것을 예방하는
+일반적인 방어책이라 기본으로 넣어 두었습니다.
+
+### Windows 10 Enterprise 2016 LTSB(1607) 대상일 때 주의할 점
+
+- Oracle의 JDK 21 공식 인증 목록에는 Windows 10이 "더 이상 지원 안 함(No Longer Supported)"으로 표기되어
+  있고, Windows 11 및 Windows Server 2016/2019/2022(+2025)만 인증 대상입니다. JDK 17로 낮춰도 동일합니다
+  (이 문서가 MS의 Windows 10 지원 종료 시점에 연동되어 갱신되기 때문). 이는 "절대 안 돌아간다"는 뜻이 아니라
+  Oracle이 더 이상 테스트/보증하지 않는다는 정책적 의미이며, Swing/AWT는 아주 오래되고 안정적인 Win32 API만
+  쓰므로 실제로는 대부분 정상 동작합니다.
+- 다만 이 프로젝트는 폐쇄망 배포라 배포 후 패치가 어려우므로, "될 것이다"에 기대지 말고 **실제 대상 빌드와
+  동일한(가능하면 동일 패치 레벨) Windows 10 2016 LTSB 머신/VM에서 jpackage로 만든 exe를 배포 전에 반드시
+  먼저 실행해 보길 권장**합니다. LTSB는 매월 보안 전용 누적 업데이트만 나오므로, 대상 PC가 2016년 출시 당시
+  RTM 상태에 가까운지 최근 누적 패치까지 적용된 상태인지에 따라 결과가 달라질 수 있습니다.
+- Windows 10 Enterprise 2016 LTSB는 2026-10-13에 마이크로소프트 지원 자체가 종료됩니다. 지금(2026-07-27)
+  기준 약 3개월 밖에 남지 않았습니다. 코드 이슈는 아니지만, 이 도구를 장기간 쓸 계획이라면 조직 차원에서
+  OS 자체의 보안 업데이트 종료 시점도 함께 고려하시는 게 좋습니다.
+- 이 앱은 순수 Swing이라 WebView2/Electron/.NET 같은 별도 런타임에 의존하지 않으므로, 그런 종류의 구버전
+  호환성 문제는 애초에 없습니다.
 
 ## 아키텍처
 
