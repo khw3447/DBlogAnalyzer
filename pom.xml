@@ -109,6 +109,7 @@
                   <jre>
                     <path>jre</path>
                     <minVersion>21.0.0</minVersion>
+                    <requires64Bit>true</requires64Bit>
                   </jre>
                   <versionInfo>
                     <fileVersion>1.0.0.0</fileVersion>

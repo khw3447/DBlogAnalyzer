@@ -16,6 +16,21 @@ if errorlevel 1 (
   goto :show_log_and_exit
 )
 
+python -c "import struct,sys; b=struct.calcsize('P')*8; print(str(b)+'bit'); sys.exit(0 if b==64 else 1)" > pyarch.tmp 2>&1
+set /p PYARCH=<pyarch.tmp
+del pyarch.tmp
+echo   Python 아키텍처: %PYARCH%
+echo   Python architecture: %PYARCH% >> "%LOG%"
+if not "%PYARCH%"=="64bit" (
+  echo.
+  echo [경고] 32비트 Python이 설치되어 있습니다. 실행 환경은 64비트이고, 동봉된 wheels도
+  echo         64비트^(win_amd64^) 전용이라 32비트 Python으로는 오프라인 설치가 실패합니다.
+  echo         https://www.python.org/downloads/ 에서 "Windows installer ^(64-bit^)"로 다시
+  echo         설치한 뒤 다시 실행해 주세요. ^(기존 32비트 Python은 제어판에서 제거 권장^)
+  echo WARNING: 32-bit Python detected, wheels are win_amd64-only >> "%LOG%"
+  goto :show_log_and_exit
+)
+
 echo [2/3] 필요한 패키지 설치 중... (아래에 실시간으로 진행 상황이 표시됩니다. 몇 분 걸릴 수
 echo       있으니 화면이 잠시 멈춘 것처럼 보여도 창을 닫지 말고 기다려 주세요)
 echo [2/3] Installing packages >> "%LOG%"

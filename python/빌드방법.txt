@@ -2,12 +2,16 @@ DBLogAnalyzer.exe 만드는 방법 (Windows PC에서 1회만)
 
 0) 준비물
    - Windows PC (배포 대상 PC와 달라도 됩니다. 여기서 exe만 만들어서 옮기면 됩니다)
-   - Python 3.11 / 3.12 / 3.13 중 하나: https://www.python.org/downloads/
+   - Python 3.11 / 3.12 / 3.13 중 하나, 반드시 **64비트(64-bit)** 버전:
+     https://www.python.org/downloads/ 에서 "Windows installer (64-bit)"를 받으세요.
+     ("32-bit"라고 적힌 걸 받으면 안 됩니다 - 동봉된 wheels가 64비트 전용이라 설치가 실패합니다.
+     실행 파일 이름은 똑같이 생겼으니 다운로드 페이지에서 (64-bit) 글자를 꼭 확인하세요.)
      설치 화면에서 아래 2개 꼭 체크하세요.
        [v] Add python.exe to PATH
        [v] tcl/tk and IDLE (기본값이라 보통 이미 체크되어 있습니다)
    - (wheels 폴더가 동봉되어 있다면) 인터넷 없이도 빌드 가능합니다.
      wheels 폴더가 없는 배포본이라면 이 PC에 인터넷이 필요합니다.
+   - build_windows.bat이 이제 Python이 64비트인지 자동으로 확인하고, 32비트면 바로 알려줍니다.
 
 1) 이 폴더(DBLogAnalyzer-python) 전체를 그 PC로 복사합니다.
 
@@ -54,11 +58,23 @@ A. 이건 거의 항상 pip가 인터넷(pypi.org)에 접속하려다 막혀서 
    바로 원인을 알 수 있습니다.
 
 Q. wheels 폴더로 설치했는데도 실패합니다.
-A. "python --version"으로 버전을 확인하세요. 동봉된 wheels는 3.11 / 3.12 / 3.13용입니다.
-   다른 버전이면 인터넷이 되는 PC에서 아래 명령으로 해당 버전용 wheels를 새로 받아
-   wheels 폴더에 넣으세요 (버전 숫자만 바꾸면 됩니다).
-   > python -m pip download --only-binary=:all: --platform win_amd64 ^
-       --python-version 3.13 --implementation cp -d wheels -r requirements.txt pyinstaller
+A. 두 가지를 확인하세요.
+   1) build_windows.bat이 뜨자마자 "Python 아키텍처: 32bit"라고 나온다면 - 32비트 Python이
+      설치된 것입니다. 동봉된 wheels는 64비트(win_amd64) 전용이라 설치가 안 됩니다.
+      python.org에서 "Windows installer (64-bit)"로 재설치하세요.
+   2) "python --version"으로 버전을 확인하세요. 동봉된 wheels는 3.11 / 3.12 / 3.13용입니다.
+      다른 버전이면 인터넷이 되는 PC에서 아래 명령으로 해당 버전용 wheels를 새로 받아
+      wheels 폴더에 넣으세요 (버전 숫자만 바꾸면 됩니다).
+      > python -m pip download --only-binary=:all: --platform win_amd64 ^
+          --python-version 3.13 --implementation cp -d wheels -r requirements.txt pyinstaller
+
+Q. 실행 환경이 64비트인데 프로그램도 64비트로 만들어지는 게 맞나요?
+A. 네. Python/PyInstaller로 만드는 exe는 빌드에 쓴 Python이 64비트면 결과물도 64비트입니다
+   (위 아키텍처 확인 단계에서 자동으로 체크합니다). 참고로 이 저장소의 Java 버전(최상위 폴더)에서
+   만드는 exe는 다른 방식이라 이야기가 다릅니다 - Launch4j라는 도구로 만드는데, 이 도구는 "런처"
+   부분을 항상 32비트로만 만듭니다(도구 자체의 한계). 다만 이 런처는 JVM을 직접 담는 게 아니라
+   64비트 javaw.exe를 자식 프로세스로 실행만 해주는 얇은 껍데기라서, 64비트 JRE만 제대로
+   연결되면 실제 동작에는 문제가 없습니다. 지금 쓰고 계신 Python 버전에는 해당하지 않는 내용입니다.
 
 Q. 프로그램 화면이나 불러온 로그 파일의 한글이 깨져 보입니다.
 A. 최신 코드에서 한글 파일 인코딩(UTF-8/EUC-KR/CP949) 자동 감지 로직을 더 정확하게 고쳤습니다.
