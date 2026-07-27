@@ -34,8 +34,14 @@ pyinstaller --onefile --windowed --name DBLogAnalyzer app.py
 `dist\DBLogAnalyzer.exe` 하나가 만들어집니다. 이 파일 하나만 복사하면 폐쇄망 PC에서 바로 실행됩니다
 (Python도, JDK도, 별도 폴더도 필요 없습니다). `--windowed`는 실행 시 콘솔 창이 함께 뜨지 않게 합니다.
 
-빌드 머신(Windows, 인터넷 되는 곳)에 필요한 것은 Python 3.11+ 설치와 위 두 pip 명령뿐입니다. 빌드가 끝나면
-그 Python 자체는 배포 대상 PC에 필요 없습니다 - exe 안에 이미 다 들어있습니다.
+빌드 머신에 필요한 것은 Python 3.11+ 설치와 위 두 pip 명령뿐입니다. 빌드가 끝나면 그 Python 자체는 배포
+대상 PC에 필요 없습니다 - exe 안에 이미 다 들어있습니다.
+
+`build_windows.bat`을 쓰면 위 과정이 자동화되고, 빌드 머신조차 pypi.org에 못 나가는 환경일 수 있다는 점을
+감안해 `wheels/` 폴더(win_amd64용, Python 3.11/3.12/3.13 커버)가 있으면 `pip install --no-index
+--find-links wheels ...`로 완전 오프라인 설치를 시도합니다. `pip install` 중 `WinError 10061`(연결 거부)이
+난다면 거의 항상 회사 프록시/방화벽이 pypi.org를 막고 있는 경우이니, wheels를 동봉한 배포본을 쓰거나 IT팀에
+pip용 프록시 설정을 문의하세요. `python/빌드방법.txt`에 같은 내용을 좀 더 자세히 적어뒀습니다.
 
 ## 아키텍처
 
@@ -55,6 +61,12 @@ dbloganalyzer/
 직접 재귀 순회해야 했지만, sqlglot의 `Expression.find_all()`은 트리 전체를 기본으로 순회하므로
 `statement.find_all(exp.Where)` 한 줄로 중첩된 서브쿼리의 WHERE절까지 전부 잡힙니다 (`sql_analyzer.py`의
 `_extract_column_values` 참고).
+
+`파일 열기`로 로그 파일을 불러올 때는 [`charset_normalizer`](https://github.com/jawah/charset_normalizer)로
+인코딩을 감지합니다. 단순히 "UTF-8로 열어보고 실패하면 CP949로 재시도" 방식은 CP949로 인코딩된 한글 바이트가
+우연히 유효한(그러나 의미 없는) UTF-8 바이트열을 이루는 경우 예외 없이 조용히 깨진 텍스트를 만들어낼 수
+있어서, 후보 인코딩들의 결과 텍스트가 실제로 말이 되는지까지 채점하는 라이브러리로 교체했습니다
+(`ui.py`의 `_read_text_auto`).
 
 ## 검증
 

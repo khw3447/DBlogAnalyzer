@@ -6,6 +6,8 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+from charset_normalizer import from_bytes
+
 from .logparser import extract_sql_blocks
 from .model import AnalysisResult
 from .sql_analyzer import CommentType, SqlRecord, SqlType, analyze as analyze_sql
@@ -18,6 +20,25 @@ _COMMENT_COLORS = {
     CommentType.BLOCK: "#966428",
     CommentType.LINE: "#966428",
 }
+
+
+def _read_text_auto(path: str) -> str | None:
+    """Reads a log file whose encoding is unknown ahead of time.
+
+    A naive "try utf-8, fall back to cp949 on UnicodeDecodeError" approach
+    can silently mis-decode: cp949-encoded Korean bytes occasionally form a
+    byte sequence that is *also* valid (but garbage) UTF-8, so the utf-8
+    attempt succeeds without raising and the text comes out corrupted
+    instead of failing loudly. charset_normalizer scores candidate
+    encodings by how coherent the resulting text actually is, which catches
+    that case.
+    """
+    with open(path, "rb") as f:
+        raw = f.read()
+    if raw.startswith(b"\xef\xbb\xbf"):
+        return raw.decode("utf-8-sig")
+    best = from_bytes(raw).best()
+    return str(best) if best is not None else None
 
 
 class MainWindow(tk.Tk):
@@ -52,17 +73,17 @@ class MainWindow(tk.Tk):
         path = filedialog.askopenfilename()
         if not path:
             return
-        for encoding in ("utf-8", "cp949"):
-            try:
-                with open(path, "r", encoding=encoding) as f:
-                    content = f.read()
-                self.log_input.delete("1.0", tk.END)
-                self.log_input.insert("1.0", content)
-                self.status_label.config(text=f"파일을 불러왔습니다: {path}")
-                return
-            except UnicodeDecodeError:
-                continue
-        messagebox.showerror("오류", "파일 인코딩을 인식할 수 없습니다 (UTF-8 / CP949 시도함).")
+        try:
+            content = _read_text_auto(path)
+        except OSError as e:
+            messagebox.showerror("오류", f"파일을 읽을 수 없습니다: {e}")
+            return
+        if content is None:
+            messagebox.showerror("오류", "파일 인코딩을 인식할 수 없습니다.")
+            return
+        self.log_input.delete("1.0", tk.END)
+        self.log_input.insert("1.0", content)
+        self.status_label.config(text=f"파일을 불러왔습니다: {path}")
 
     # ---------- result panel ----------
 

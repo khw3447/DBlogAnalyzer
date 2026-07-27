@@ -1,0 +1,48 @@
+DBLogAnalyzer.exe 만드는 방법 (Windows PC에서 1회만)
+
+0) 준비물
+   - Windows PC (배포 대상 PC와 달라도 됩니다. 여기서 exe만 만들어서 옮기면 됩니다)
+   - Python 3.11 / 3.12 / 3.13 중 하나: https://www.python.org/downloads/
+     설치 화면에서 아래 2개 꼭 체크하세요.
+       [v] Add python.exe to PATH
+       [v] tcl/tk and IDLE (기본값이라 보통 이미 체크되어 있습니다)
+   - (wheels 폴더가 동봉되어 있다면) 인터넷 없이도 빌드 가능합니다.
+     wheels 폴더가 없는 배포본이라면 이 PC에 인터넷이 필요합니다.
+
+1) 이 폴더(DBLogAnalyzer-python) 전체를 그 PC로 복사합니다.
+
+2) 폴더 안에서 build_windows.bat 파일을 더블클릭합니다.
+   - wheels 폴더가 있으면 그걸 이용해 완전히 오프라인으로 패키지를 설치합니다(인터넷 접속 시도 안 함).
+   - 없으면 인터넷(pip, pypi.org)으로 설치를 시도합니다.
+   - 중간에 검은 창(cmd)이 뜨고 진행 상황이 표시됩니다. 에러 없이 끝나면 아무 키나 눌러 창을 닫으세요.
+
+   (수동으로 하고 싶다면, 이 폴더에서 명령 프롬프트를 열고 아래처럼 입력해도 됩니다)
+   > python -m pip install --no-index --find-links wheels -r requirements.txt pyinstaller
+   > python -m PyInstaller --onefile --windowed --name DBLogAnalyzer app.py
+
+3) 빌드가 끝나면 dist 폴더 안에 DBLogAnalyzer.exe 가 생깁니다.
+   이 파일 "하나만" 복사해서 폐쇄망 PC로 옮기면 됩니다. Python도, 다른 폴더/파일도 필요 없습니다.
+
+4) 실행이 안 되거나 오류 메시지가 뜨면, 어느 단계(빌드 중 / exe 실행 시 / 특정 버튼 클릭 시)에서
+   무슨 메시지가 떴는지 화면을 캡처해서 알려주세요.
+
+--------------------------------------------------------------------------
+자주 겪는 문제
+
+Q. "WinError 10061" (연결을 거부했으므로...) 오류가 뜹니다.
+A. 이건 거의 항상 pip가 인터넷(pypi.org)에 접속하려다 막혀서 나는 오류입니다(회사 프록시/방화벽).
+   동봉된 wheels 폴더를 이용하면 인터넷 접속 자체를 시도하지 않으므로 이 문제를 피할 수 있습니다.
+   그래도 이 오류가 뜬다면, 어느 단계(패키지 설치 중인지, exe를 실행했을 때인지)에서 떴는지가
+   중요하니 정확한 상황을 알려주세요.
+
+Q. wheels 폴더로 설치했는데도 실패합니다.
+A. "python --version"으로 버전을 확인하세요. 동봉된 wheels는 3.11 / 3.12 / 3.13용입니다.
+   다른 버전이면 인터넷이 되는 PC에서 아래 명령으로 해당 버전용 wheels를 새로 받아
+   wheels 폴더에 넣으세요 (버전 숫자만 바꾸면 됩니다).
+   > python -m pip download --only-binary=:all: --platform win_amd64 ^
+       --python-version 3.13 --implementation cp -d wheels -r requirements.txt pyinstaller
+
+Q. 프로그램 화면이나 불러온 로그 파일의 한글이 깨져 보입니다.
+A. 최신 코드에서 한글 파일 인코딩(UTF-8/EUC-KR/CP949) 자동 감지 로직을 더 정확하게 고쳤습니다.
+   여전히 깨진다면: (1) 프로그램 자체의 버튼/라벨 글자가 깨지는지, (2) 붙여넣거나 불러온 로그 "내용"
+   글자가 깨지는지 구분해서 알려주세요. 원인이 서로 다릅니다.

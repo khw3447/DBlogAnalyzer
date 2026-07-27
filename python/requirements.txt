@@ -1,1 +1,2 @@
 sqlglot>=30
+charset-normalizer>=3
