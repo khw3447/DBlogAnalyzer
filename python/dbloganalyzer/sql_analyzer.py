@@ -112,9 +112,12 @@ def _detect_type_by_keyword(sql: str) -> SqlType:
 
 
 def _extract_tables(statement: exp.Expression) -> list[str]:
+    # Oracle identifiers are case-insensitive unless quoted, so the same log can
+    # spell a table as both inst1.TSKSAST04 and INST1.TSKSAST04 - without
+    # normalizing, those would be counted as two different tables instead of one.
     seen: dict[str, None] = {}
     for table in statement.find_all(exp.Table):
-        seen[exp.table_name(table)] = None
+        seen[exp.table_name(table).upper()] = None
     return list(seen)
 
 

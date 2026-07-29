@@ -117,7 +117,7 @@ class SqlAnalyzerTest {
 
         assertTrue(record.parsedOk(), record.parseError());
         assertEquals(SqlType.INSERT, record.type());
-        assertEquals(List.of("inst1.TSKSAST04"), record.tables());
+        assertEquals(List.of("INST1.TSKSAST04"), record.tables());
         assertTrue(record.columnValues().stream()
                 .anyMatch(cv -> cv.column().equals("시스템경로번호") && cv.value().equals("002")));
     }
@@ -135,5 +135,16 @@ class SqlAnalyzerTest {
                 cv.column().equals("가입년월일") && cv.value().contains("TO_CHAR") && cv.value().contains("SYSDATE")));
         assertTrue(record.columnValues().stream().anyMatch(cv ->
                 cv.column().equals("해제년월일") && cv.value().contains("NVL")));
+    }
+
+    @Test
+    void tableNamesAreNormalizedToUppercaseSoCaseVariantsCollapse() {
+        RawSqlBlock block = new RawSqlBlock(1, "2026-01-01 00:00:00,000", "t",
+                "SELECT a.col FROM Inst1.TskeCd4c2 a, INST1.TSKECD4C2 b WHERE a.col = b.col");
+
+        SqlRecord record = analyzer.analyze(block);
+
+        assertTrue(record.parsedOk(), record.parseError());
+        assertEquals(List.of("INST1.TSKECD4C2"), record.tables());
     }
 }

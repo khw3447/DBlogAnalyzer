@@ -91,7 +91,7 @@ def test_bracketed_format_lowercase_insert_with_multiline_xml_literal_parses_cor
 
     assert record.parsed_ok, record.parse_error
     assert record.type == SqlType.INSERT
-    assert record.tables == ["inst1.TSKSAST04"]
+    assert record.tables == ["INST1.TSKSAST04"]
     assert any(cv.column == "시스템경로번호" and cv.value == "002" for cv in record.column_values)
 
 
@@ -105,3 +105,12 @@ def test_where_clause_function_call_value_is_captured():
     assert any(cv.column == "가입년월일" and "TO_CHAR" in cv.value and "SYSDATE" in cv.value
                for cv in record.column_values)
     assert any(cv.column == "해제년월일" and "NVL" in cv.value for cv in record.column_values)
+
+
+def test_table_names_are_normalized_to_uppercase_so_case_variants_collapse():
+    block = RawSqlBlock(1, "2026-01-01 00:00:00,000", "t",
+                         "SELECT a.col FROM Inst1.TskeCd4c2 a, INST1.TSKECD4C2 b WHERE a.col = b.col")
+    record = analyze(block)
+
+    assert record.parsed_ok, record.parse_error
+    assert record.tables == ["INST1.TSKECD4C2"]
