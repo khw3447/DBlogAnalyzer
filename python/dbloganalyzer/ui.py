@@ -125,13 +125,14 @@ class MainWindow(tk.Tk):
         self.search_var.trace_add("write", lambda *_: self._refresh_sql_list())
         ttk.Button(search_bar, text="지우기", command=lambda: self.search_var.set("")).pack(side="left")
 
-        list_columns = ("seq", "timestamp", "type", "tables", "summary", "parsed")
-        list_headers = ("#", "시각", "타입", "테이블", "SQL 요약", "파싱")
+        list_columns = ("seq", "timestamp", "thread", "type", "tables", "summary", "parsed")
+        list_headers = ("#", "시각", "스레드/거래코드", "타입", "테이블", "SQL 요약", "파싱")
         self.sql_list_view = ttk.Treeview(right, columns=list_columns, show="headings")
         for col, header in zip(list_columns, list_headers):
             self.sql_list_view.heading(col, text=header)
         self.sql_list_view.column("seq", width=40)
         self.sql_list_view.column("timestamp", width=140)
+        self.sql_list_view.column("thread", width=110)
         self.sql_list_view.column("type", width=70)
         self.sql_list_view.column("tables", width=200)
         self.sql_list_view.column("summary", width=400)
@@ -210,8 +211,8 @@ class MainWindow(tk.Tk):
             summary = " ".join(record.raw_sql.split())
             if len(summary) > 120:
                 summary = summary[:120] + "..."
-            values = (record.sequence, record.timestamp, record.type.name, ", ".join(record.tables),
-                      summary, "OK" if record.parsed_ok else "실패")
+            values = (record.sequence, record.timestamp, record.thread, record.type.name,
+                      ", ".join(record.tables), summary, "OK" if record.parsed_ok else "실패")
             self.sql_list_view.insert("", "end", iid=row_id, values=values)
             self._sql_records_by_row[row_id] = record
 

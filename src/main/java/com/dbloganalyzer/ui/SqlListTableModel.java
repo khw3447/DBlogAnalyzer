@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 class SqlListTableModel extends AbstractTableModel {
 
-    private static final String[] COLUMNS = {"#", "시각", "타입", "테이블", "SQL 요약", "파싱"};
+    private static final String[] COLUMNS = {"#", "시각", "스레드/거래코드", "타입", "테이블", "SQL 요약", "파싱"};
 
     private List<SqlRecord> rows = new ArrayList<>();
 
@@ -43,10 +43,11 @@ class SqlListTableModel extends AbstractTableModel {
         return switch (columnIndex) {
             case 0 -> record.sequence();
             case 1 -> record.timestamp();
-            case 2 -> record.type();
-            case 3 -> record.tables().stream().collect(Collectors.joining(", "));
-            case 4 -> summarize(record.rawSql());
-            case 5 -> record.parsedOk() ? "OK" : "실패";
+            case 2 -> record.thread();
+            case 3 -> record.type();
+            case 4 -> record.tables().stream().collect(Collectors.joining(", "));
+            case 5 -> summarize(record.rawSql());
+            case 6 -> record.parsedOk() ? "OK" : "실패";
             default -> "";
         };
     }
