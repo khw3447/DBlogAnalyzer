@@ -97,6 +97,7 @@ class SqlAnalyzerTest {
         assertEquals(SqlType.SELECT, record.type());
         assertEquals(List.of("INST1.TSKECC101"), record.tables());
         assertEquals("KEC0649142", record.thread());
+        assertEquals("KB0502310200120260723180357000093002", record.guid());
         assertTrue(record.columnValues().stream().anyMatch(cv -> cv.column().equals("그룹회사코드") && cv.value().equals("KB0")));
     }
 
@@ -124,7 +125,7 @@ class SqlAnalyzerTest {
 
     @Test
     void whereClauseFunctionCallValueIsCaptured() {
-        RawSqlBlock block = new RawSqlBlock(1, "2026-01-01 00:00:00,000", "t",
+        RawSqlBlock block = new RawSqlBlock(1, "2026-01-01 00:00:00,000", "t", "",
                 "SELECT 1 FROM DUAL WHERE 가입년월일 <= TO_CHAR(SYSDATE, 'YYYYMMDD') "
                         + "AND 해제년월일 = NVL(종료일자, '99991231')");
 
@@ -139,7 +140,7 @@ class SqlAnalyzerTest {
 
     @Test
     void tableNamesAreNormalizedToUppercaseSoCaseVariantsCollapse() {
-        RawSqlBlock block = new RawSqlBlock(1, "2026-01-01 00:00:00,000", "t",
+        RawSqlBlock block = new RawSqlBlock(1, "2026-01-01 00:00:00,000", "t", "",
                 "SELECT a.col FROM Inst1.TskeCd4c2 a, INST1.TSKECD4C2 b WHERE a.col = b.col");
 
         SqlRecord record = analyzer.analyze(block);

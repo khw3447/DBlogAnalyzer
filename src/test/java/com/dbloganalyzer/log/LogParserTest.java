@@ -54,6 +54,7 @@ class LogParserTest {
 
         assertEquals("2026-07-24 10:56:08,061", blocks.get(0).timestamp());
         assertEquals("mkec495b-1", blocks.get(0).thread());
+        assertEquals("", blocks.get(0).guid());
     }
 
     @Test
@@ -72,6 +73,13 @@ class LogParserTest {
 
         assertEquals("2026-07-23 18:03:57", blocks.get(0).timestamp());
         assertEquals("KEC0649142", blocks.get(0).thread());
+    }
+
+    @Test
+    void bracketedFormatCapturesTransactionSerialNumberAsGuid() throws IOException {
+        List<RawSqlBlock> blocks = new LogParser().extractSqlBlocks(loadBracketSampleLog());
+
+        assertEquals("KB0502310200120260723180357000093002", blocks.get(0).guid());
     }
 
     @Test

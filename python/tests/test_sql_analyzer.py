@@ -73,6 +73,7 @@ def test_bracketed_format_select_parses_correctly():
     assert record.type == SqlType.SELECT
     assert record.tables == ["INST1.TSKECC101"]
     assert record.thread == "KEC0649142"
+    assert record.guid == "KB0502310200120260723180357000093002"
     assert any(cv.column == "그룹회사코드" and cv.value == "KB0" for cv in record.column_values)
 
 
@@ -96,7 +97,7 @@ def test_bracketed_format_lowercase_insert_with_multiline_xml_literal_parses_cor
 
 
 def test_where_clause_function_call_value_is_captured():
-    block = RawSqlBlock(1, "2026-01-01 00:00:00,000", "t",
+    block = RawSqlBlock(1, "2026-01-01 00:00:00,000", "t", "",
                          "SELECT 1 FROM DUAL WHERE 가입년월일 <= TO_CHAR(SYSDATE, 'YYYYMMDD') "
                          "AND 해제년월일 = NVL(종료일자, '99991231')")
     record = analyze(block)
@@ -108,7 +109,7 @@ def test_where_clause_function_call_value_is_captured():
 
 
 def test_table_names_are_normalized_to_uppercase_so_case_variants_collapse():
-    block = RawSqlBlock(1, "2026-01-01 00:00:00,000", "t",
+    block = RawSqlBlock(1, "2026-01-01 00:00:00,000", "t", "",
                          "SELECT a.col FROM Inst1.TskeCd4c2 a, INST1.TSKECD4C2 b WHERE a.col = b.col")
     record = analyze(block)
 

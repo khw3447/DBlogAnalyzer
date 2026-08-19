@@ -31,19 +31,22 @@ class RawSqlBlock:
     sequence: int
     timestamp: str
     thread: str
+    guid: str
     raw_sql: str
 
 
-def _match_prefix(line: str) -> tuple[str, str, str] | None:
-    """Returns (timestamp, thread, message) for a recognized prefix line, else None."""
+def _match_prefix(line: str) -> tuple[str, str, str, str] | None:
+    """Returns (timestamp, thread, guid, message) for a recognized prefix line, else None."""
     m = _LOG_PREFIX_LEGACY.match(line)
     if m:
-        return m.group(1), m.group(3), m.group(5)
+        # The legacy format has no per-transaction id, only a thread name.
+        return m.group(1), m.group(3), "", m.group(5)
     m = _LOG_PREFIX_BRACKETED.match(line)
     if m:
-        # group(2) is the long per-transaction id, group(3) the calling program/screen
-        # code - the latter is the closer analogue of "thread" for display purposes.
-        return m.group(1), m.group(3), m.group(5)
+        # group(2) is the long per-transaction id (거래일련번호, shown in the UI as
+        # "GUID"), group(3) the calling program/screen code (거래코드) - the latter is
+        # the closer analogue of "thread" for display purposes.
+        return m.group(1), m.group(3), m.group(2), m.group(5)
     return None
 
 
@@ -53,6 +56,7 @@ def extract_sql_blocks(log_text: str) -> list[RawSqlBlock]:
 
     current_timestamp: str | None = None
     current_thread: str | None = None
+    current_guid: str | None = None
     current_sql_lines: list[str] | None = None
     sequence = 0
 
@@ -61,7 +65,8 @@ def extract_sql_blocks(log_text: str) -> list[RawSqlBlock]:
         if current_sql_lines is not None:
             sequence += 1
             blocks.append(
-                RawSqlBlock(sequence, current_timestamp, current_thread, "\n".join(current_sql_lines).strip())
+                RawSqlBlock(sequence, current_timestamp, current_thread, current_guid,
+                            "\n".join(current_sql_lines).strip())
             )
             current_sql_lines = None
 
@@ -69,11 +74,12 @@ def extract_sql_blocks(log_text: str) -> list[RawSqlBlock]:
         prefix = _match_prefix(line)
         if prefix:
             flush()
-            timestamp, thread, message = prefix
+            timestamp, thread, guid, message = prefix
             sm = _SQL_MARKER.match(message.strip())
             if sm:
                 current_timestamp = timestamp
                 current_thread = thread
+                current_guid = guid
                 current_sql_lines = []
                 inline = sm.group(1)
                 if inline.strip():

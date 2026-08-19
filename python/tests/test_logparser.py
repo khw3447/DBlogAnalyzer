@@ -29,6 +29,7 @@ def test_captures_timestamp_and_thread():
 
     assert blocks[0].timestamp == "2026-07-24 10:56:08,061"
     assert blocks[0].thread == "mkec495b-1"
+    assert blocks[0].guid == ""
 
 
 def test_extracts_sql_blocks_from_bracketed_log_format():
@@ -45,6 +46,12 @@ def test_bracketed_format_captures_timestamp_and_program_code_as_thread():
 
     assert blocks[0].timestamp == "2026-07-23 18:03:57"
     assert blocks[0].thread == "KEC0649142"
+
+
+def test_bracketed_format_captures_transaction_serial_number_as_guid():
+    blocks = extract_sql_blocks(BRACKET_FIXTURE)
+
+    assert blocks[0].guid == "KB0502310200120260723180357000093002"
 
 
 def test_bracketed_format_does_not_swallow_non_sql_lines_between_blocks():

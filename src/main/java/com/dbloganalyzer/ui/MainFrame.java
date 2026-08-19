@@ -153,7 +153,7 @@ public class MainFrame extends JFrame {
 
     private JPanel buildSearchPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panel.add(new JLabel("컬럼/값 검색:"));
+        panel.add(new JLabel("컬럼/값/GUID 검색:"));
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -247,7 +247,8 @@ public class MainFrame extends JFrame {
         List<SqlRecord> filtered = currentResult.records().stream()
                 .filter(r -> enabledTypes.contains(r.type()))
                 .filter(r -> selectedTable == null || r.tables().contains(selectedTable))
-                .filter(r -> searchTerm.isEmpty() || r.columnValues().stream().anyMatch(cv ->
+                .filter(r -> searchTerm.isEmpty() || r.guid().toLowerCase().contains(searchTerm)
+                        || r.columnValues().stream().anyMatch(cv ->
                         cv.column().toLowerCase().contains(searchTerm) || cv.value().toLowerCase().contains(searchTerm)))
                 .collect(Collectors.toList());
 

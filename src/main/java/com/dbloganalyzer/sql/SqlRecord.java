@@ -7,6 +7,7 @@ public record SqlRecord(
         int sequence,
         String timestamp,
         String thread,
+        String guid,
         SqlType type,
         List<String> tables,
         List<ColumnValue> columnValues,

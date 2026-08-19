@@ -32,19 +32,21 @@ public class LogParser {
     private static final Pattern SQL_MARKER = Pattern.compile("^SQL\\s*:\\s*(.*)$", Pattern.CASE_INSENSITIVE);
 
     /** A recognized log-prefix line, normalized across the formats above. */
-    private record PrefixMatch(String timestamp, String thread, String message) {
+    private record PrefixMatch(String timestamp, String thread, String guid, String message) {
     }
 
     private PrefixMatch matchPrefix(String line) {
         Matcher legacy = LOG_PREFIX_LEGACY.matcher(line);
         if (legacy.matches()) {
-            return new PrefixMatch(legacy.group(1), legacy.group(3), legacy.group(5));
+            // The legacy format has no per-transaction id, only a thread name.
+            return new PrefixMatch(legacy.group(1), legacy.group(3), "", legacy.group(5));
         }
         Matcher bracketed = LOG_PREFIX_BRACKETED.matcher(line);
         if (bracketed.matches()) {
-            // group(2) is the long per-transaction id, group(3) the calling program/screen
-            // code - the latter is the closer analogue of "thread" for display purposes.
-            return new PrefixMatch(bracketed.group(1), bracketed.group(3), bracketed.group(5));
+            // group(2) is the long per-transaction id (거래일련번호, shown in the UI as
+            // "GUID"), group(3) the calling program/screen code (거래코드) - the latter
+            // is the closer analogue of "thread" for display purposes.
+            return new PrefixMatch(bracketed.group(1), bracketed.group(3), bracketed.group(2), bracketed.group(5));
         }
         return null;
     }
@@ -55,6 +57,7 @@ public class LogParser {
 
         String currentTimestamp = null;
         String currentThread = null;
+        String currentGuid = null;
         StringBuilder currentSql = null;
         int sequence = 0;
 
@@ -62,7 +65,7 @@ public class LogParser {
             PrefixMatch prefix = matchPrefix(line);
             if (prefix != null) {
                 if (currentSql != null) {
-                    blocks.add(new RawSqlBlock(++sequence, currentTimestamp, currentThread, currentSql.toString().strip()));
+                    blocks.add(new RawSqlBlock(++sequence, currentTimestamp, currentThread, currentGuid, currentSql.toString().strip()));
                     currentSql = null;
                 }
 
@@ -70,6 +73,7 @@ public class LogParser {
                 if (sqlMarker.matches()) {
                     currentTimestamp = prefix.timestamp();
                     currentThread = prefix.thread();
+                    currentGuid = prefix.guid();
                     currentSql = new StringBuilder();
                     String inline = sqlMarker.group(1);
                     if (!inline.isBlank()) {
@@ -82,7 +86,7 @@ public class LogParser {
         }
 
         if (currentSql != null) {
-            blocks.add(new RawSqlBlock(++sequence, currentTimestamp, currentThread, currentSql.toString().strip()));
+            blocks.add(new RawSqlBlock(++sequence, currentTimestamp, currentThread, currentGuid, currentSql.toString().strip()));
         }
 
         return blocks;

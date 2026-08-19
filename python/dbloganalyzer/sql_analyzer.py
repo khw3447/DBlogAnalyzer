@@ -73,6 +73,7 @@ class SqlRecord:
     sequence: int
     timestamp: str
     thread: str
+    guid: str
     type: SqlType
     tables: list[str]
     column_values: list[ColumnValue]
@@ -97,10 +98,10 @@ def analyze(block: RawSqlBlock) -> SqlRecord:
         sql_type = _TYPE_BY_EXPRESSION.get(type(statement), keyword_type)
         tables = _extract_tables(statement)
         column_values = _extract_column_values(statement)
-        return SqlRecord(block.sequence, block.timestamp, block.thread, sql_type, tables,
+        return SqlRecord(block.sequence, block.timestamp, block.thread, block.guid, sql_type, tables,
                           column_values, analyzed.comments, block.raw_sql, True, None)
     except Exception as e:  # sqlglot raises various ParseError/TokenizeError subclasses
-        return SqlRecord(block.sequence, block.timestamp, block.thread, keyword_type, [],
+        return SqlRecord(block.sequence, block.timestamp, block.thread, block.guid, keyword_type, [],
                           [], analyzed.comments, block.raw_sql, False, str(e))
 
 

@@ -38,10 +38,10 @@ public class SqlAnalyzer {
             SqlType type = typeOf(statement, keywordType);
             List<String> tables = TableExtractor.extract(statement);
             List<ColumnValue> columnValues = ColumnValueExtractor.extract(statement);
-            return new SqlRecord(block.sequence(), block.timestamp(), block.thread(), type, tables,
+            return new SqlRecord(block.sequence(), block.timestamp(), block.thread(), block.guid(), type, tables,
                     columnValues, analyzed.comments(), block.rawSql(), true, null);
         } catch (JSQLParserException | RuntimeException e) {
-            return new SqlRecord(block.sequence(), block.timestamp(), block.thread(), keywordType, List.of(),
+            return new SqlRecord(block.sequence(), block.timestamp(), block.thread(), block.guid(), keywordType, List.of(),
                     List.of(), analyzed.comments(), block.rawSql(), false, rootMessage(e));
         }
     }

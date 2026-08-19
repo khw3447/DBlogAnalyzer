@@ -42,6 +42,7 @@ class SqlDetailDialog extends JDialog {
         JPanel infoPanel = new JPanel(new BorderLayout());
         String tag = record.statementIdTag();
         String info = "시각: " + record.timestamp() + "   스레드: " + record.thread()
+                + (record.guid().isEmpty() ? "" : "   GUID: " + record.guid())
                 + (tag.isEmpty() ? "" : "   구문ID: " + tag)
                 + (record.parsedOk() ? "" : "   [파싱 실패: " + record.parseError() + "]");
         infoPanel.add(new JLabel(info), BorderLayout.WEST);
